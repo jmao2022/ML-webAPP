@@ -9,6 +9,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 import os
+import zipfile
 
 def main():
     st.title("Binary Classification")    
@@ -75,11 +76,47 @@ def main():
             plt.savefig("outputTest/Precision-Recall.png",bbox_inches='tight')
             plt.savefig("outputTest/Precision-Recall.svg",bbox_inches='tight')
             st.pyplot()
+
+
+    #压缩用的
+    #############################################
+    def get_zip_file(input_path, result):
+        files = os.listdir(input_path)
+        for file in files:
+            if os.path.isdir(input_path + '/' + file):
+                get_zip_file(input_path + '/' + file, result)
+            else:
+                result.append(input_path + '/' + file)
+
+    def zip_file_path(input_path):    
+        filelists = []
+        get_zip_file(input_path, filelists)
+        for file in filelists:
+            f.write(file)
+
+    def Results_save(output, result):
+        if os.path.exists(result):
+            os.remove(result)
+        # f = zipfile.ZipFile(output_path + '/' + output_name, 'w', zipfile.ZIP_DEFLATED)
+        f = zipfile.ZipFile(result, 'w', zipfile.ZIP_DEFLATED)
+        filelists1 = []
+        filelists2 = []
+        get_zip_file("outputTrain", filelists1)
+        get_zip_file("outputTest", filelists2)
+        for file1 in filelists1:
+            f.write(file1)
+        for file2 in filelists2:
+            f.write(file2)
+        f.write(output)
+        f.close()
+    ###############################################
+
+
     #判断保存图片的output文件夹存在
     if not os.path.exists("outputTrain"):
         os.mkdir("outputTrain")
     if not os.path.exists("outputTest"):
-        os.mkdir("outputTest")        
+        os.mkdir("outputTest")       
     #隐藏警告信息
     st.set_option('deprecation.showPyplotGlobalUse', False)
     #加载csv文件
@@ -93,6 +130,11 @@ def main():
         Inputlabel = text_input
         x_train, x_test, y_train, y_test = split(df)
         class_names = ['type1', 'type0']
+
+    if st.sidebar.checkbox("Show raw data", False):
+        st.subheader("Mushroom Data Set (Classification)")
+        st.write(df)
+
     #选择分类模型
     st.sidebar.subheader("Choose Classifier")
     classifier = st.sidebar.selectbox("Classifier", ("Support Vector Machine (SVM)", "Logistic Regression", "Random Forest"))
@@ -131,6 +173,9 @@ def main():
                 print("Test Accuracy: ", accuracy.round(2), file=f)
                 print("Test Precision: ", precision_score(y_test, y_pred, labels = class_names).round(2), file=f)
                 print("Test Recall: ", recall_score(y_test, y_pred, labels = class_names).round(2), file=f)
+            Results_save("outputSVM.txt", "ResultsSVM.zip")
+            with open("ResultsSVM.zip", "rb") as file:
+                st.download_button('Download Results in a zip file', data=file, file_name="ResultsSVM.zip")
 
     if classifier == "Logistic Regression":
         st.sidebar.subheader("Model Hyperparameters")
@@ -165,6 +210,9 @@ def main():
                 print("Test Accuracy: ", accuracy.round(2), file=f)
                 print("Test Precision: ", precision_score(y_test, y_pred, labels = class_names).round(2), file=f)
                 print("Test Recall: ", recall_score(y_test, y_pred, labels = class_names).round(2), file=f)         
+            Results_save("outputLR.txt", "ResultsLR.zip")
+            with open("ResultsLR.zip", "rb") as file:
+                st.download_button('Download Results in a zip file', data=file, file_name="ResultsLR.zip")
 
     if classifier == "Random Forest":
         st.sidebar.subheader("Model Hyperparameters")        
@@ -199,10 +247,9 @@ def main():
                 print("Test Accuracy: ", accuracy.round(2), file=f)
                 print("Test Precision: ", precision_score(y_test, y_pred, labels = class_names).round(2), file=f)
                 print("Test Recall: ", recall_score(y_test, y_pred, labels = class_names).round(2), file=f)
-                        
-    if st.sidebar.checkbox("Show raw data", False):
-        st.subheader("Mushroom Data Set (Classification)")
-        st.write(df)
-    
+            Results_save("outputRF.txt", "ResultsRF.zip")
+            with open("ResultsRF.zip", "rb") as file:
+                st.download_button('Download Results in a zip file', data=file, file_name="ResultsRF.zip")          
+
 if __name__ == '__main__':
     main()
